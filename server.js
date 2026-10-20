@@ -68,7 +68,13 @@ async function serveStatic(pathname, res) {
   });
 }
 
-export function makeServer({ apiKey = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL || 'gemini-3.6-flash', fetchImpl = fetch } = {}) {
+export function makeServer({
+  apiKey = process.env.GEMINI_API_KEY,
+  model = process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+  // Tried in order when the main model is overloaded or out of quota.
+  fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash,gemini-3-flash-preview').split(',').map((m) => m.trim()).filter(Boolean),
+  fetchImpl = fetch,
+} = {}) {
   // ponytail: in-memory cache + rate limit are per instance; move to Memorystore if Cloud Run scales past one instance.
   const cache = new Map();
   const hits = new Map();
@@ -93,7 +99,7 @@ export function makeServer({ apiKey = process.env.GEMINI_API_KEY, model = proces
     if (!cache.has(key)) {
       let data;
       try {
-        data = finalize(value.mode, await callGemini(buildPrompt(value), { apiKey, model, fetchImpl, grounded: value.mode !== 'lens' }), value);
+        data = finalize(value.mode, await callGemini(buildPrompt(value), { apiKey, model, fallbacks, fetchImpl, grounded: value.mode !== 'lens' }), value);
       } catch (e) {
         console.error('gemini_error', e.message);
         throw httpError(502, 'The AI planner is busy right now. Please try again in a moment.');

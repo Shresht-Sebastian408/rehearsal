@@ -120,3 +120,18 @@ test('callGemini sends key + schema and parses non-thought text', async () => {
   const failing = async () => new Response('nope', { status: 429 });
   await assert.rejects(callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'm', fetchImpl: failing }), /429/);
 });
+
+test('callGemini drops grounding on 429, then walks the fallback models on 503', async () => {
+  const seen = [];
+  const statuses = [429, 503, 200];
+  const fetchImpl = async (url, opts) => {
+    seen.push(`${url.match(/models\/(.+):/)[1]}${JSON.parse(opts.body).tools ? '+search' : ''}`);
+    const status = statuses.shift();
+    return status === 200 ? Response.json({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) : new Response('x', { status });
+  };
+  const out = await callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b', 'c'], grounded: true, fetchImpl });
+  assert.deepEqual(out, { ok: 1 });
+  assert.deepEqual(seen, ['a+search', 'a', 'b']);
+  const always503 = async () => new Response('busy', { status: 503 });
+  await assert.rejects(callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b'], fetchImpl: always503 }), /503/);
+});
