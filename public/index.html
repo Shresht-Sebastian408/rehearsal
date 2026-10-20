@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rehearsal · AI Event Planner</title>
+  <meta name="description" content="Plan weddings, birthdays and community events with Gemini, then run a pre-mortem dress rehearsal of the day before it happens.">
+  <meta name="theme-color" content="#7a2e4d">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237a2e4d'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23f6d48b' font-family='Georgia,serif' font-style='italic'%3ER%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="masthead">
+    <span class="brand">Rehearsal<span aria-hidden="true">.</span></span>
+    <span class="masthead-note">Powered by Gemini</span>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Weddings · Birthdays · Community events</p>
+        <h1 id="hero-title">Every event, <em>rehearsed</em> before it happens.</h1>
+        <p class="lede">Tell us the basics. Gemini drafts your budget, timeline and vendor checklist. Then it runs a minute-by-minute <strong>pre-mortem</strong> of the day and walks it <strong>in your guests' shoes</strong>, so problems show up on paper instead of at the party.</p>
+        <ol class="steps">
+          <li><span>01</span> Plan: budget, timeline, vendors, signature ideas</li>
+          <li><span>02</span> Rehearse: find what breaks on the day, and fix it now</li>
+          <li><span>03</span> Guest Lens: see the day as a grandparent, a toddler's parent, a wheelchair user…</li>
+        </ol>
+      </div>
+
+      <form id="plan-form" class="card form" aria-labelledby="form-title">
+        <div class="form-head">
+          <h2 id="form-title">Your event</h2>
+          <button type="button" id="example" class="link-btn">Try an example</button>
+        </div>
+
+        <fieldset class="chips">
+          <legend>Type of event</legend>
+          <label><input type="radio" name="eventType" value="wedding" required checked> 💍 Wedding</label>
+          <label><input type="radio" name="eventType" value="birthday"> 🎂 Birthday</label>
+          <label><input type="radio" name="eventType" value="community"> 🤝 Community</label>
+        </fieldset>
+
+        <div class="grid-2">
+          <label>Date <input type="date" name="date" id="date" required></label>
+          <label>City <input name="city" required maxlength="80" autocomplete="address-level2" placeholder="e.g. Jaipur, India"></label>
+          <label>Venue <span class="opt">(optional)</span> <input name="venue" maxlength="120" placeholder="Name it and Gemini checks real reviews"></label>
+          <label>Must end by <span class="opt">(optional)</span> <input type="time" name="endBy"></label>
+          <label>Guests <input type="number" name="guests" required min="1" max="5000" step="1" inputmode="numeric" placeholder="150"></label>
+          <div class="money">
+            <label>Budget <input type="number" name="budget" required min="10" max="1000000000" step="any" inputmode="decimal" placeholder="20000"></label>
+            <label>Currency <input name="currency" required value="USD" maxlength="3" pattern="[A-Za-z]{3}" list="currencies" autocomplete="off" class="upper"></label>
+          </div>
+        </div>
+        <datalist id="currencies">
+          <option value="USD"><option value="EUR"><option value="GBP"><option value="INR"><option value="NGN"><option value="KES">
+          <option value="CAD"><option value="AUD"><option value="JPY"><option value="BRL"><option value="AED"><option value="SGD">
+        </datalist>
+
+        <label>Vibe <input name="vibe" maxlength="200" placeholder="e.g. garden party, modern boho, zero-waste"></label>
+        <label>Traditions &amp; culture <input name="traditions" maxlength="200" placeholder="e.g. Punjabi Hindu; mehndi and sangeet"></label>
+        <label>Constraints <textarea name="constraints" maxlength="300" rows="2" placeholder="e.g. monsoon season, grandmother uses a wheelchair, no alcohol"></textarea></label>
+        <label>Plan language
+          <select name="language">
+            <option>English</option><option>Hindi</option><option>Spanish</option><option>French</option><option>Portuguese</option>
+            <option>Arabic</option><option>German</option><option>Japanese</option><option>Swahili</option><option>Tamil</option>
+          </select>
+        </label>
+        <button type="submit" class="btn primary">Draft my plan</button>
+        <p class="fine">Your plan is saved only in this browser.</p>
+      </form>
+    </section>
+
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+
+    <section id="results" class="results" hidden aria-labelledby="plan-title">
+      <header class="plan-head">
+        <p class="eyebrow" id="plan-meta"></p>
+        <h2 id="plan-title" tabindex="-1"></h2>
+        <p id="plan-summary" class="lede"></p>
+        <div id="plan-sources"></div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="share">Copy share link</button>
+          <button type="button" class="btn" id="print">Print / save PDF</button>
+          <button type="button" class="btn ghost" id="reset">Start over</button>
+        </div>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Plan sections">
+        <button role="tab" id="t-overview" aria-controls="p-overview" aria-selected="true">Ideas &amp; day</button>
+        <button role="tab" id="t-budget" aria-controls="p-budget" aria-selected="false" tabindex="-1">Budget</button>
+        <button role="tab" id="t-timeline" aria-controls="p-timeline" aria-selected="false" tabindex="-1">Timeline</button>
+        <button role="tab" id="t-vendors" aria-controls="p-vendors" aria-selected="false" tabindex="-1">Vendors</button>
+        <button role="tab" id="t-rehearse" aria-controls="p-rehearse" aria-selected="false" tabindex="-1">Rehearsal</button>
+        <button role="tab" id="t-lens" aria-controls="p-lens" aria-selected="false" tabindex="-1">Guest Lens</button>
+      </div>
+
+      <div role="tabpanel" id="p-overview" aria-labelledby="t-overview" class="panel"></div>
+      <div role="tabpanel" id="p-budget" aria-labelledby="t-budget" class="panel" hidden></div>
+      <div role="tabpanel" id="p-timeline" aria-labelledby="t-timeline" class="panel" hidden></div>
+      <div role="tabpanel" id="p-vendors" aria-labelledby="t-vendors" class="panel" hidden></div>
+
+      <div role="tabpanel" id="p-rehearse" aria-labelledby="t-rehearse" class="panel" hidden>
+        <div class="callout">
+          <div>
+            <h3>Dress rehearsal</h3>
+            <p>Gemini walks your day minute by minute and assumes things <em>will</em> go wrong: late vendors, rain, queues, elders standing too long. You get a readiness score and the fixes that matter most.</p>
+          </div>
+          <button type="button" class="btn primary" id="rehearse-btn">Run the rehearsal</button>
+        </div>
+        <section class="card chaos" aria-labelledby="chaos-title">
+          <h3 id="chaos-title">Chaos test</h3>
+          <p class="muted">Break the day on purpose. See how one slip pushes back everything after it, then let Gemini rescue the schedule.</p>
+          <div class="chaos-controls">
+            <label>What goes wrong
+              <select id="chaos-what">
+                <option>The caterer arrives late</option>
+                <option>A sudden downpour</option>
+                <option>A power cut</option>
+                <option>20% more guests than expected</option>
+                <option>A ritual or speeches run long</option>
+              </select>
+            </label>
+            <label>At <select id="chaos-at"></select></label>
+            <label>Delay
+              <select id="chaos-delay">
+                <option value="15">15 min</option><option value="30">30 min</option><option value="60" selected>60 min</option><option value="90">90 min</option>
+              </select>
+            </label>
+          </div>
+          <div id="chaos-out"></div>
+          <button type="button" class="btn primary" id="rescue-btn">Ask Gemini to rescue the day</button>
+        </section>
+        <div id="rehearse-out"></div>
+      </div>
+
+      <div role="tabpanel" id="p-lens" aria-labelledby="t-lens" class="panel" hidden>
+        <div class="callout">
+          <div>
+            <h3>Guest Lens</h3>
+            <p>Every guest has a different day. Gemini scores each stage of your event for five kinds of guests. Click any amber or red cell to see what goes wrong and add the fix to your timeline.</p>
+          </div>
+          <button type="button" class="btn primary" id="lens-btn">Scan the guest experience</button>
+        </div>
+        <div id="lens-out"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built with Gemini on Google Cloud Run. Suggestions come from AI, so confirm prices and availability with vendors before you pay.</p>
+  </footer>
+</body>
+</html>

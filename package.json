@@ -1,0 +1,13 @@
+{
+  "name": "rehearsal",
+  "version": "1.0.0",
+  "description": "GenAI event planner that drafts budgets, timelines and vendor checklists, then rehearses the event day before it happens.",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
