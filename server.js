@@ -68,7 +68,8 @@ async function serveStatic(pathname, res) {
   });
 }
 
-export function makeServer({
+/** The (req, res) request handler. Vercel calls it directly (api/index.js); makeServer wraps it for everything else. */
+export function makeHandler({
   apiKey = process.env.GEMINI_API_KEY,
   model = process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   // Tried in order when the main model is overloaded or out of quota.
@@ -110,7 +111,7 @@ export function makeServer({
     send(res, 200, cache.get(key));
   }
 
-  return createServer(async (req, res) => {
+  return async (req, res) => {
     try {
       const { pathname } = new URL(req.url, 'http://localhost');
       if (pathname === '/healthz') return send(res, 200, { ok: true });
@@ -124,8 +125,10 @@ export function makeServer({
       if (!e.status) console.error(e);
       if (!res.headersSent) send(res, e.status ?? 500, { error: e.status ? e.message : 'Something went wrong.' });
     }
-  });
+  };
 }
+
+export const makeServer = (opts) => createServer(makeHandler(opts));
 
 if (process.argv[1] && normalize(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 8080;

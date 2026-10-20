@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "mkdir -p dist",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.js": { "includeFiles": "public/**", "maxDuration": 300 }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+}
