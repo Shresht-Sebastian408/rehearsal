@@ -63,7 +63,9 @@ npm run dev                             # http://localhost:8080
 npm test
 ```
 
-Deploy to Cloud Run:
+Deploy on Render's free tier: the repo has a `render.yaml`, so in the Render dashboard pick New > Blueprint, point it at this repo and paste your key when it asks. The free instance sleeps after 15 idle minutes, so the first visit after that takes about a minute.
+
+Deploy to Cloud Run (needs billing on the project):
 
 ```bash
 gcloud run deploy rehearsal --source . --region us-central1 --allow-unauthenticated \

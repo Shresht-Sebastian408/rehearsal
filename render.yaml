@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: rehearsal
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: GEMINI_API_KEY
+        sync: false

@@ -88,7 +88,7 @@ export function makeServer({
   }
 
   async function generate(req, res) {
-    // Cloud Run's front end appends the real client IP last; earlier entries are client-controlled and spoofable.
+    // The hosting proxy (Cloud Run, Render) appends the real client IP last; earlier entries are client-controlled and spoofable.
     const ip = String(req.headers['x-forwarded-for'] ?? req.socket.remoteAddress).split(',').at(-1).trim();
     if (limited(ip)) throw httpError(429, 'Too many requests. Please wait a few minutes.');
     const { errors, value } = validate(await readJson(req));
