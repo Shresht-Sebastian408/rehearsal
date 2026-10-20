@@ -85,7 +85,10 @@ test('callGemini grounds with Google Search, returns sources, and retries ungrou
   const ok = Response.json({
     candidates: [{
       content: { parts: [{ text: '{"a":1}' }] },
-      groundingMetadata: { groundingChunks: [{ web: { uri: 'https://example.com/x', title: 'example.com' } }, { web: { uri: 'javascript:alert(1)' } }] },
+      groundingMetadata: {
+        groundingChunks: [{ web: { uri: 'https://example.com/x', title: 'example.com' } }, { web: { uri: 'javascript:alert(1)' } }],
+        searchEntryPoint: { renderedContent: '<style>.chip{}</style><a class="chip">q</a>' },
+      },
     }],
   });
   const fetchImpl = async (_url, opts) => {
@@ -95,7 +98,11 @@ test('callGemini grounds with Google Search, returns sources, and retries ungrou
   const out = await callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'm', grounded: true, fetchImpl });
   assert.deepEqual(bodies[0].tools, [{ google_search: {} }]);
   assert.equal(bodies[1].tools, undefined);
-  assert.deepEqual(out, { a: 1, sources: [{ title: 'example.com', uri: 'https://example.com/x' }] });
+  assert.deepEqual(out, {
+    a: 1,
+    sources: [{ title: 'example.com', uri: 'https://example.com/x' }],
+    searchWidget: '<style>.chip{}</style><a class="chip">q</a>',
+  });
 });
 
 test('callGemini sends key + schema and parses non-thought text', async () => {

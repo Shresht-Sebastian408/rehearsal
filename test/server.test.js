@@ -40,6 +40,13 @@ test('serves the app with security headers', async () => {
   assert.equal((await fetch(`${live}/healthz`)).status, 200);
 });
 
+test('only the search-widget frame gets inline styles, and only we can frame it', async () => {
+  const csp = (await fetch(`${live}/widget.html`)).headers.get('content-security-policy');
+  assert.match(csp, /style-src 'unsafe-inline'/);
+  assert.match(csp, /frame-ancestors 'self'/);
+  assert.doesNotMatch((await fetch(`${live}/`)).headers.get('content-security-policy'), /unsafe-inline/);
+});
+
 test('blocks path traversal and unknown files', async () => {
   assert.equal((await fetch(`${live}/%2e%2e%2fserver.js`)).status, 404);
   assert.equal((await fetch(`${live}/nope.js`)).status, 404);

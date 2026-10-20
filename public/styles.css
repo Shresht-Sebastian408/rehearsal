@@ -200,7 +200,9 @@ summary { cursor: pointer; font-weight: 600; color: var(--accent); }
 .fix { color: var(--low); }
 .fix strong { color: inherit; }
 
-.sources { font-size: .8rem; color: var(--muted); margin: .5rem auto 1rem; max-width: 70ch; }
+.sources { font-size: .8rem; color: var(--muted); margin: .5rem auto; max-width: 70ch; }
+.grounding { margin-bottom: 1rem; }
+.gsearch { display: block; width: 100%; max-width: 720px; height: 60px; margin: 0 auto; border: 0; }
 .alert { border: 1px solid var(--high); color: var(--high); background: color-mix(in srgb, var(--high) 8%, transparent); border-radius: 12px; padding: .7rem 1rem; font-weight: 500; }
 .okay { color: var(--low); font-weight: 500; }
 .opt { font-weight: 400; color: var(--muted); font-size: .8rem; }

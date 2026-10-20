@@ -171,11 +171,31 @@ tabs.forEach((t, i) => {
 });
 
 // --- rendering ---
-function sourcesLine(list) {
-  const safe = (list ?? []).filter((s) => typeof s?.uri === 'string' && s.uri.startsWith('https://'));
-  if (!safe.length) return null;
-  return h('p', { className: 'sources' }, 'Checked with Google Search: ',
-    safe.map((s, i) => [i ? ' · ' : '', h('a', { href: s.uri, target: '_blank', rel: 'noopener noreferrer' }, s.title)]));
+// Google's Search Suggestions widget renders in a sandboxed frame (see widget.js); we hand it the HTML once it says it's ready.
+const widgets = new Map();
+addEventListener('message', (e) => {
+  for (const [frame, html] of widgets) {
+    if (!frame.isConnected) { widgets.delete(frame); continue; }
+    if (e.source !== frame.contentWindow) continue;
+    if (e.data?.widgetReady) frame.contentWindow.postMessage({ searchWidget: html }, '*');
+    if (Number.isFinite(e.data?.widgetHeight)) frame.style.height = `${Math.min(e.data.widgetHeight, 300)}px`;
+  }
+});
+
+function grounding({ sources, searchWidget } = {}) {
+  const safe = (sources ?? []).filter((s) => typeof s?.uri === 'string' && s.uri.startsWith('https://'));
+  let frame = null;
+  if (typeof searchWidget === 'string') {
+    frame = h('iframe', { src: 'widget.html', title: 'Google Search suggestions', className: 'gsearch', sandbox: 'allow-scripts allow-popups allow-popups-to-escape-sandbox' });
+    widgets.set(frame, searchWidget);
+  }
+  if (!safe.length && !frame) return null;
+  return h('div', { className: 'grounding' },
+    safe.length
+      ? h('p', { className: 'sources' }, 'Checked with Google Search: ',
+          safe.map((s, i) => [i ? ' · ' : '', h('a', { href: s.uri, target: '_blank', rel: 'noopener noreferrer' }, s.title)]))
+      : null,
+    frame);
 }
 
 function render() {
@@ -187,7 +207,7 @@ function render() {
   $('#plan-meta').textContent = [input.eventType, input.venue, input.city, fmtDate(input.date), `${input.guests} guests`, money(input.budget)].filter(Boolean).join(' · ');
   $('#plan-title').textContent = plan.title;
   $('#plan-summary').textContent = plan.summary;
-  $('#plan-sources').replaceChildren(sourcesLine(plan.sources) ?? '');
+  $('#plan-sources').replaceChildren(grounding(plan) ?? '');
   renderOverview();
   renderBudget();
   renderTimeline();
@@ -387,7 +407,7 @@ function renderRehearsal() {
     h('div', { className: 'verdict card' }, ring,
       h('div', {}, h('h4', {}, 'Verdict'), h('p', { className: 'lede' }, r.headline),
         h('h4', {}, 'Fix this week'), h('ol', {}, r.topFixes.map((f) => h('li', {}, f))),
-        sourcesLine(r.sources))),
+        grounding(r))),
     h('ol', { className: 'moments' },
       r.moments.map((m) =>
         h('li', { className: `moment ${m.severity}` },

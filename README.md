@@ -47,15 +47,19 @@ Google pieces in use: the Gemini API (`gemini-3.6-flash`, which you can change w
 
 The API key never leaves the server. Every field is validated at the boundary against allow-lists, numeric and time ranges and length caps. Control characters and angle brackets are stripped, so user text can't close the `<event>` tag it's wrapped in, and the system prompt tells the model to treat that block as data. The CSP blocks inline scripts and styles. Bodies are capped at 32 KB, and the rate limiter keys on the IP that Cloud Run's front end appends last in `X-Forwarded-For`, because the earlier entries can be forged. Share links are shape-checked before anything renders, and only https source links get shown. The container runs as a non-root user.
 
+One exception to the strict CSP: Google's grounding terms say you have to show their Search Suggestions widget exactly as they send it, inline styles and all. Rather than loosen the whole site for that, the widget renders inside a sandboxed iframe (`widget.html`) with its own small CSP. The frame has an opaque origin, so even a tampered share link can't reach the app's storage from in there.
+
 ### Accessibility
 
 The tabs follow the WAI-ARIA pattern, so arrow keys, Home and End all work. Status and errors go through an aria-live region. Nothing relies on colour alone: cells say "Problem" or "Watch", schedule rows say "overruns". There's a skip link, visible focus, dark mode, reduced-motion support, and `lang`/`dir` set on the AI output so screen readers pronounce Hindi as Hindi.
 
 ## Running it
 
+Put your key in a `.env` file (it's gitignored) and start the dev server:
+
 ```bash
-export GEMINI_API_KEY=your_key        # https://aistudio.google.com/apikey
-npm start                             # http://localhost:8080
+echo "GEMINI_API_KEY=your_key" > .env   # https://aistudio.google.com/apikey
+npm run dev                             # http://localhost:8080
 npm test
 ```
 

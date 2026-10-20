@@ -21,7 +21,9 @@ const SECURITY_HEADERS = {
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
   'cross-origin-opener-policy': 'same-origin',
 };
-const RATE = { max: 30, windowMs: 10 * 60_000 };
+// Google's Search Suggestions widget needs inline styles; it only ever renders in a sandboxed frame of ours.
+const WIDGET_CSP = "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; frame-ancestors 'self'; base-uri 'none'";
+const RATE ={ max: 30, windowMs: 10 * 60_000 };
 const CACHE_MAX = 200;
 
 const httpError = (status, message) => Object.assign(new Error(message), { status });
@@ -59,7 +61,11 @@ async function serveStatic(pathname, res) {
   const body = await readFile(file).catch(() => null);
   if (!body) throw httpError(404, 'Not found.');
   const type = TYPES[extname(file)] ?? 'application/octet-stream';
-  send(res, 200, body, { 'content-type': type, 'cache-control': type.startsWith('text/html') ? 'no-cache' : 'public, max-age=600' });
+  send(res, 200, body, {
+    'content-type': type,
+    'cache-control': type.startsWith('text/html') ? 'no-cache' : 'public, max-age=600',
+    ...(rel === '/widget.html' && { 'content-security-policy': WIDGET_CSP }),
+  });
 }
 
 export function makeServer({ apiKey = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL || 'gemini-3.6-flash', fetchImpl = fetch } = {}) {
