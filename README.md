@@ -63,7 +63,7 @@ npm run dev                             # http://localhost:8080
 npm test
 ```
 
-Live on Vercel: https://eventsplanner-ai.vercel.app. Vercel picks up `server.js` on its own and calls its default export, and serves `public/` from its CDN. `vercel.json` repeats the security headers for those files, and a test makes sure they match the server's. To deploy your own copy, run `npx vercel --prod` and add `GEMINI_API_KEY` as an environment variable.
+Live on Vercel: https://rehearsal-ai-planner.vercel.app. Vercel picks up `server.js` on its own and calls its default export, and serves `public/` from its CDN. `vercel.json` repeats the security headers for those files, and a test makes sure they match the server's. To deploy your own copy, run `npx vercel --prod` and add `GEMINI_API_KEY` as an environment variable.
 
 Deploy to Cloud Run (needs billing on the project):
 
