@@ -1,9 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "mkdir -p dist",
-  "outputDirectory": "dist",
-  "functions": {
-    "api/index.js": { "includeFiles": "public/**", "maxDuration": 300 }
-  },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "content-security-policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" },
+        { "key": "x-content-type-options", "value": "nosniff" },
+        { "key": "referrer-policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "permissions-policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "cross-origin-opener-policy", "value": "same-origin" }
+      ]
+    },
+    {
+      "source": "/widget.html",
+      "headers": [
+        { "key": "content-security-policy", "value": "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; frame-ancestors 'self'; base-uri 'none'" }
+      ]
+    }
+  ]
 }

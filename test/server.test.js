@@ -1,6 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeServer } from '../server.js';
+import { readFileSync } from 'node:fs';
+import { makeServer, SECURITY_HEADERS, WIDGET_CSP } from '../server.js';
 
 const future = new Date(Date.now() + 120 * 864e5).toISOString().slice(0, 10);
 const body = { mode: 'plan', eventType: 'birthday', date: future, city: 'Lagos', guests: 40, budget: 900000, currency: 'NGN' };
@@ -45,6 +46,12 @@ test('only the search-widget frame gets inline styles, and only we can frame it'
   assert.match(csp, /style-src 'unsafe-inline'/);
   assert.match(csp, /frame-ancestors 'self'/);
   assert.doesNotMatch((await fetch(`${live}/`)).headers.get('content-security-policy'), /unsafe-inline/);
+});
+
+test('vercel.json headers for CDN-served files match the server exactly', () => {
+  const [all, widget] = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url))).headers;
+  assert.deepEqual(Object.fromEntries(all.headers.map((h) => [h.key, h.value])), SECURITY_HEADERS);
+  assert.deepEqual(widget.headers, [{ key: 'content-security-policy', value: WIDGET_CSP }]);
 });
 
 test('blocks path traversal and unknown files', async () => {

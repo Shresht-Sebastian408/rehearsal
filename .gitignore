@@ -4,3 +4,6 @@ node_modules/
 counter attack.txt
 dist/
 .vercel/
+
+.vercel
+.env*

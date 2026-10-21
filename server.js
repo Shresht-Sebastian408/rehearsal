@@ -13,7 +13,7 @@ const TYPES = {
   '.svg': 'image/svg+xml',
   '.json': 'application/json',
 };
-const SECURITY_HEADERS = {
+export const SECURITY_HEADERS = {
   'content-security-policy':
     "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
   'x-content-type-options': 'nosniff',
@@ -22,7 +22,7 @@ const SECURITY_HEADERS = {
   'cross-origin-opener-policy': 'same-origin',
 };
 // Google's Search Suggestions widget needs inline styles; it only ever renders in a sandboxed frame of ours.
-const WIDGET_CSP = "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; frame-ancestors 'self'; base-uri 'none'";
+export const WIDGET_CSP ="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src https: data:; font-src https: data:; frame-ancestors 'self'; base-uri 'none'";
 const RATE ={ max: 30, windowMs: 10 * 60_000 };
 const CACHE_MAX = 200;
 
@@ -68,12 +68,12 @@ async function serveStatic(pathname, res) {
   });
 }
 
-/** The (req, res) request handler. Vercel calls it directly (api/index.js); makeServer wraps it for everything else. */
+/** The (req, res) request handler. Vercel calls the default export directly; makeServer wraps it for everything else. */
 export function makeHandler({
   apiKey = process.env.GEMINI_API_KEY,
   model = process.env.GEMINI_MODEL || 'gemini-3.6-flash',
   // Tried in order when the main model is overloaded or out of quota.
-  fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash,gemini-3-flash-preview').split(',').map((m) => m.trim()).filter(Boolean),
+  fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash,gemini-3-flash-preview,gemini-3.7-flash,gemini-3.5-flash-lite').split(',').map((m) => m.trim()).filter(Boolean),
   fetchImpl = fetch,
 } = {}) {
   // ponytail: in-memory cache + rate limit are per instance; move to Memorystore if Cloud Run scales past one instance.
@@ -129,6 +129,10 @@ export function makeHandler({
 }
 
 export const makeServer = (opts) => createServer(makeHandler(opts));
+
+// Vercel's zero-config Node runtime picks up server.js and calls its default export per request.
+// It serves public/ from its CDN, so vercel.json repeats our security headers for those files.
+export default makeHandler();
 
 if (process.argv[1] && normalize(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 8080;

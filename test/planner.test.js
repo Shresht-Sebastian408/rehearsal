@@ -129,9 +129,9 @@ test('callGemini drops grounding on 429, then walks the fallback models on 503',
     const status = statuses.shift();
     return status === 200 ? Response.json({ candidates: [{ content: { parts: [{ text: '{"ok":1}' }] } }] }) : new Response('x', { status });
   };
-  const out = await callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b', 'c'], grounded: true, fetchImpl });
+  const out = await callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b', 'c'], grounded: true, fetchImpl, retryDelayMs: 0 });
   assert.deepEqual(out, { ok: 1 });
   assert.deepEqual(seen, ['a+search', 'a', 'b']);
   const always503 = async () => new Response('busy', { status: 503 });
-  await assert.rejects(callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b'], fetchImpl: always503 }), /503/);
+  await assert.rejects(callGemini({ system: 's', user: 'u', schema: {} }, { apiKey: 'k', model: 'a', fallbacks: ['b'], fetchImpl: always503, retryDelayMs: 0 }), /503/);
 });
